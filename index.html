@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cyber Security Analyzer // Enes</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background-color: #060608;
+            color: #00ff66;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .analyzer-card {
+            background: rgba(12, 12, 18, 0.95);
+            border: 1px solid #1f2937;
+            border-radius: 16px;
+            padding: 30px;
+            width: 100%;
+            max-width: 550px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.7);
+            transition: border-color 0.3s, box-shadow 0.3s;
+        }
+
+        .analyzer-card.secure {
+            border-color: #00ff66;
+            box-shadow: 0 0 20px rgba(0, 255, 102, 0.2);
+        }
+
+        .analyzer-card.warning {
+            border-color: #ffaa00;
+            box-shadow: 0 0 20px rgba(255, 170, 0, 0.2);
+        }
+
+        .analyzer-card.danger {
+            border-color: #ff3344;
+            box-shadow: 0 0 20px rgba(255, 51, 68, 0.2);
+        }
+
+        h1 {
+            font-size: 1.8rem;
+            color: #fff;
+            margin-bottom: 5px;
+            text-align: center;
+            letter-spacing: 1px;
+        }
+
+        p.subtitle {
+            color: #6b7280;
+            font-size: 0.9rem;
+            text-align: center;
+            margin-bottom: 25px;
+        }
+
+        .input-group {
+            margin-bottom: 20px;
+            position: relative;
+        }
+
+        label {
+            display: block;
+            color: #9ca3af;
+            font-size: 0.85rem;
+            margin-bottom: 8px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .input-field {
+            width: 100%;
+            padding: 14px;
+            background: #0f0f15;
+            border: 1px solid #374151;
+            border-radius: 8px;
+            color: #fff;
+            font-size: 1rem;
+            outline: none;
+            transition: all 0.3s;
+        }
+
+        .input-field:focus {
+            border-color: #00ff66;
+        }
+
+        /* Güvenlik Çubuğu */
+        .strength-bar-container {
+            width: 100%;
+            height: 6px;
+            background: #1f2937;
+            border-radius: 3px;
+            margin-bottom: 20px;
+            overflow: hidden;
+        }
+
+        .strength-bar {
+            height: 100%;
+            width: 0%;
+            background: #ff3344;
+            transition: all 0.4s ease;
+        }
+
+        /* Sonuç Paneli */
+        .result-panel {
+            background: #0f0f15;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 15px;
+        }
+
+        .result-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+            font-size: 0.95rem;
+        }
+
+        .result-row:last-child {
+            margin-bottom: 0;
+        }
+
+        .result-label {
+            color: #9ca3af;
+        }
+
+        .result-value {
+            font-weight: bold;
+            color: #fff;
+        }
+
+        .notice {
+            font-size: 0.75rem;
+            color: #4b5563;
+            text-align: center;
+            margin-top: 15px;
+        }
+
+        footer {
+            margin-top: 25px;
+            text-align: center;
+            color: #374151;
+            font-size: 0.8rem;
+            border-top: 1px solid #111827;
+            padding-top: 15px;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="analyzer-card" id="card">
+        <h1>SECURITY ANALYZER</h1>
+        <p class="subtitle">Şifre ve veri güvenliği analiz paneli.</p>
+
+        <div class="input-group">
+            <label for="secretInput">Analiz Edilecek Veri (Şifre / Token)</label>
+            <input type="password" id="secretInput" class="input-field" placeholder="Veriyi buraya yapıştırın veya yazın...">
+        </div>
+
+        <div class="strength-bar-container">
+            <div class="strength-bar" id="strengthBar"></div>
+        </div>
+
+        <div class="result-panel">
+            <div class="result-row">
+                <span class="result-label">Güvenlik Durumu:</span>
+                <span class="result-value" id="statusVal" style="color: #ff3344;">Veri Yok</span>
+            </div>
+            <div class="result-row">
+                <span class="result-label">Kırılma Süresi (Tahmini):</span>
+                <span class="result-value" id="timeVal">-</span>
+            </div>
+            <div class="result-row">
+                <span class="result-label">Tespit Edilen Tür:</span>
+                <span class="result-value" id="typeVal">-</span>
+            </div>
+        </div>
+
+        <p class="notice">🔒 Gizlilik Bildirimi: Girilen veriler tamamen tarayıcınızda işlenir ve hiçbir sunucuya gönderilmez.</p>
+
+        <footer>
+            Enes tarafından yapılmıştır
+        </footer>
+    </div>
+
+    <script>
+        const secretInput = document.getElementById('secretInput');
+        const strengthBar = document.getElementById('strengthBar');
+        const statusVal = document.getElementById('statusVal');
+        const timeVal = document.getElementById('timeVal');
+        const typeVal = document.getElementById('typeVal');
+        const card = document.getElementById('card');
+
+        secretInput.addEventListener('input', () => {
+            const val = secretInput.value;
+            
+            if (val.length === 0) {
+                resetForm();
+                return;
+            }
+
+           
+            const isToken = val.includes('.') && val.length > 50;
+            if (isToken) {
+                typeVal.innerText = "Discord Bot Token";
+                typeVal.style.color = "#5865F2";
+            } else {
+                typeVal.innerText = "Standart Şifre";
+                typeVal.style.color = "#fff";
+            }
+
+            // 2. Güç Skoru Hesaplama
+            let score = 0;
+            if (val.length >= 8) score += 20;
+            if (val.length >= 14) score += 20;
+            if (/[A-Z]/.test(val)) score += 20;
+            if (/[0-9]/.test(val)) score += 20;
+            if (/[^A-Za-z0-9]/.test(val)) score += 20;
+
+            // Eğer token ise otomatik tam puan
+            if (isToken) score = 100;
+
+            // 3. Görsel Güncellemeler ve Kırılma Süreleri
+            strengthBar.style.width = score + "%";
+
+            if (score <= 40) {
+                card.className = "analyzer-card danger";
+                strengthBar.style.backgroundColor = "#ff3344";
+                statusVal.innerText = "ZAYIF / TEHLİKELİ";
+                statusVal.style.color = "#ff3344";
+                timeVal.innerText = val.length < 5 ? "Saliseler içinde" : "Birkaç dakika";
+            } else if (score <= 80) {
+                card.className = "analyzer-card warning";
+                strengthBar.style.backgroundColor = "#ffaa00";
+                statusVal.innerText = "ORTA DÜZEY";
+                statusVal.style.color = "#ffaa00";
+                timeVal.innerText = val.length < 11 ? "Birkaç gün" : "Birkaç ay";
+            } else {
+                card.className = "analyzer-card secure";
+                strengthBar.style.backgroundColor = "#00ff66";
+                statusVal.innerText = "YÜKSEK GÜVENLİK";
+                statusVal.style.color = "#00ff66";
+                timeVal.innerText = isToken ? "Asla Kırılamaz (Milyarlarca Yıl)" : "Yüzyıllar sürebilir";
+            }
+        });
+
+        function resetForm() {
+            card.className = "analyzer-card";
+            strengthBar.style.width = "0%";
+            statusVal.innerText = "Veri Yok";
+            statusVal.style.color = "#ff3344";
+            timeVal.innerText = "-";
+            typeVal.innerText = "-";
+            typeVal.style.color = "#fff";
+        }
+    </script>
+</body>
+</html>
